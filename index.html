@@ -1,53 +1,52 @@
-<!-- 声明文档为HTML5标准文档 -->
+<!-- 文档声明HTML5规范 -->
 <!DOCTYPE html>
-<!-- 根标签，页面语言中文 -->
+<!-- 网页根标签，语言中文 -->
 <html lang="zh-CN">
 <head>
-  <!-- 设定网页字符编码，防止中文乱码 -->
+  <!-- 字符编码UTF-8，中文不乱码 -->
   <meta charset="UTF-8" />
-  <!-- 移动端适配：宽度等于设备屏幕，禁止用户双指缩放页面 -->
+  <!-- 移动端自适应，禁止缩放屏幕 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <!-- 浏览器标签页标题 -->
+  <!-- 网页标题 -->
   <title>黑底爱心电子相册</title>
-  <!-- 引入hammer手势JS，用来实现手机手指滑动、电脑拖拽切换图片 -->
+  <!-- 引入hammer手势库：实现拖拽、左右滑动 -->
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
-  <!-- CSS样式区域开始 -->
   <style>
-    /* 全局通配符：清除所有标签默认内外边距，统一盒模型计算规则 */
+    /* 全局初始化：清除默认边距，统一盒模型 */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    /* 页面整体样式：纯黑背景，最小高度铺满屏幕，隐藏横向溢出滚动条 */
+    /* 页面整体黑色背景，高度铺满屏幕，隐藏横向溢出 */
     body {
       background: #000;
       min-height: 100vh;
       overflow-x: hidden;
     }
-    /* 播放器容器：固定定位在页面右上角，层级最高不会被相册遮挡 */
+    /* 音乐播放器固定右上角，最高层级不被遮挡 */
     .audio-wrap {
       position: fixed;
       top: 16px;
       right: 16px;
       z-index: 999;
     }
-    /* 原生音频播放器尺寸+粉色外发光 */
+    /* 播放器宽度+粉色发光阴影 */
     audio {
       width: 180px;
       filter: drop-shadow(0 0 8px #ff69b4);
     }
-    /* 修改播放器控制面板背景颜色 */
+    /* 修改播放器控制面板底色 */
     audio::-webkit-media-controls-panel {
       background: #222;
     }
-    /* 修改播放器播放时长文字颜色 */
+    /* 播放器时间文字粉色 */
     audio::-webkit-media-controls-current-time-display,
     audio::-webkit-media-controls-time-remaining-display {
       color: #ff69b4;
     }
 
-    /* 相册外层容器：页面水平垂直居中，宽度自适应手机92%，电脑最大700px */
+    /* 相册盒子：页面居中，自适应手机宽度，超出部分隐藏 */
     .album-box {
       width: 92%;
       max-width: 700px;
@@ -55,24 +54,24 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      overflow: hidden;/* 超出容器的图片隐藏 */
+      overflow: hidden;
       border: 2px solid #ff69b4;
       border-radius: 12px;
       box-shadow: 0 0 25px #ff69b455;
     }
-    /* 图片容器横向排列，切换时有平滑过渡动画 */
+    /* 图片横向排列，过渡动画用于切换/回弹 */
     .img-list {
       display: flex;
       transition: transform 0.6s ease;
     }
-    /* 单张图片铺满容器宽度，图片等比裁切不变形 */
+    /* 单张图片占满容器宽度，图片不变形裁切 */
     .img-list img {
       width: 100%;
       flex-shrink: 0;
       display: block;
       object-fit: cover;
     }
-    /* 左右切换按钮通用样式 */
+    /* 左右切换按钮样式 */
     .prev, .next {
       position: absolute;
       top: 50%;
@@ -85,12 +84,10 @@
       cursor: pointer;
       z-index: 10;
     }
-    /* 上一张按钮靠左摆放 */
     .prev {left: 6px;}
-    /* 下一张按钮靠右摆放 */
     .next {right: 6px;}
 
-    /* 鼠标生成爱心样式：穿透点击、无法选中文字、粉色、层级低于相册 */
+    /* 爱心样式：不阻挡鼠标点击，不能选中文字 */
     .heart {
       position: absolute;
       pointer-events: none;
@@ -101,129 +98,137 @@
   </style>
 </head>
 <body>
-  <!-- 右上角音乐播放器区域 -->
+  <!-- 右上角音乐播放器，自动循环播放 -->
   <div class="audio-wrap">
-    <!-- 自带控制面板、页面载入自动播放、循环背景音乐 -->
     <audio controls autoplay loop id="bgMusic">
-      <!-- 背景音乐资源地址，可替换为本地mp3 -->
       <source src="http://music.163.com/song/media/outer/url?id=1811941177.mp3" type="audio/mpeg">
     
   </div>
 
-  <!-- 相册主体容器 -->
+  <!-- 相册容器 -->
   <div class="album-box">
-    <!-- 手动点击上一张按钮 -->
     <button class="prev">&lt;</button>
-    <!-- 手动点击下一张按钮 -->
     <button class="next">&gt;</button>
-    <!-- 图片轮播容器 -->
     <div class="img-list" id="slider">
-      <!-- 示例图片1，src可替换自定义图片地址 -->
       <img src="https://picsum.photos/id/237/800/500" alt="相册">
-      <!-- 示例图片2 -->
       <img src="https://picsum.photos/id/128/800/500" alt="相册">
-      <!-- 示例图片3 -->
       <img src="https://picsum.photos/id/36/800/500" alt="相册">
-      <!-- 示例图片4 -->
       <img src="https://picsum.photos/id/96/800/500" alt="相册">
     </div>
   </div>
 
-<!-- JS逻辑代码：轮播+手势滑动+鼠标爱心拖尾 -->
 <script>
-// 获取图片外层容器DOM对象
+// 获取轮播容器
 const slider = document.getElementById('slider');
-// 获取容器内所有图片
+// 获取全部图片
 const imgs = slider.querySelectorAll('img');
-// 获取上一页按钮
+// 获取左右按钮
 const prev = document.querySelector('.prev');
-// 获取下一页按钮
 const next = document.querySelector('.next');
-// 记录当前展示图片下标，默认从第0张开始
+// 当前图片下标
 let index = 0;
-// 统计图片总数量
+// 图片总数量
 const total = imgs.length;
+// 容器宽度（单页宽度）
+let wrapWidth = slider.offsetWidth;
+// 拖拽临界值：拖动超过页面30%才翻页，不足回弹
+const dragThreshold = wrapWidth * 0.3;
 
-// 修改容器位移实现图片切换的公用函数
-function changeSlide(){
-  slider.style.transform = `translateX(-${index * 100}%)`;
+// 切换图片统一方法
+function changeSlide(offset = 0) {
+  slider.style.transition = 'transform 0.6s ease';
+  slider.style.transform = `translateX(${offset - index * wrapWidth}px)`;
 }
-// 点击下一张：下标+1，取余实现循环
-next.onclick = ()=>{
-  index = (index+1)%total;
-  changeSlide();
-}
-// 点击上一张：下标-1，+total避免负数再取余循环
-prev.onclick = ()=>{
-  index = (index-1+total)%total;
-  changeSlide();
-}
-// 自动轮播：4500毫秒自动切换一张
-setInterval(()=>{
-  index = (index+1)%total;
-  changeSlide();
-},4500)
 
-// ==========新增：Hammer实现手机手指左右滑动、电脑拖拽翻页==========
-// 绑定手势对象到相册容器
+// 点击下一张
+next.onclick = () => {
+  index = (index + 1) % total;
+  changeSlide();
+};
+// 点击上一张
+prev.onclick = () => {
+  index = (index - 1 + total) % total;
+  changeSlide();
+};
+// 自动轮播4.5s切换
+setInterval(() => {
+  index = (index + 1) % total;
+  changeSlide();
+}, 4500);
+
+// ====== 拖拽+回弹核心逻辑 ======
 const hammer = new Hammer(slider);
-// 开启左右水平滑动识别
-hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
-// 监听向左滑动手势 → 切下一张
-hammer.on('swipeleft',()=>{
-  index = (index+1)%total;
-  changeSlide();
-})
-// 监听向右滑动手势 → 切上一张
-hammer.on('swiperight',()=>{
-  index = (index-1+total)%total;
-  changeSlide();
-})
+// 开启拖拽识别
+hammer.get('pan').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+let dragX = 0; // 实时拖拽偏移值
 
-// ==========鼠标爱心拖尾配置==========
-// 爱心配置项：字体大小、颜色、淡出时间、页面最大共存爱心数量
-const heartOpt = {size:14,color:'#ff69b4',fade:0.7,max:90};
-// 数组储存所有生成的爱心dom
+// 拖拽进行中：跟随手指实时移动，取消过渡
+hammer.on('panmove', (e) => {
+  slider.style.transition = 'none';
+  dragX = e.deltaX;
+  slider.style.transform = `translateX(${dragX - index * wrapWidth}px)`;
+});
+
+// 松手结束拖拽：判断距离，达标翻页，不足回弹原位
+hammer.on('panend', () => {
+  slider.style.transition = 'transform 0.6s ease';
+  // 向左拖拽距离达标 → 下一页
+  if (dragX < -dragThreshold) {
+    index = (index + 1) % total;
+  }
+  // 向右拖拽距离达标 → 上一页
+  else if (dragX > dragThreshold) {
+    index = (index - 1 + total) % total;
+  }
+  // 不满足拖拽距离，回弹当前页位置
+  dragX = 0;
+  changeSlide();
+});
+
+// 左右快速轻扫直接翻页
+hammer.on('swipeleft', () => {
+  index = (index + 1) % total;
+  changeSlide();
+});
+hammer.on('swiperight', () => {
+  index = (index - 1 + total) % total;
+  changeSlide();
+});
+
+// ====== 鼠标爱心拖尾代码 ======
+const heartOpt = { size: 14, color: '#ff69b4', fade: 0.7, max: 90 };
 let heartsArr = [];
-// 记录鼠标横向坐标
-let mx=0;
-// 记录鼠标纵向坐标
-let my=0;
+let mx = 0, my = 0;
 
-// 全局监听鼠标移动事件
-document.addEventListener('mousemove',e=>{
+document.addEventListener('mousemove', e => {
   mx = e.clientX;
   my = e.clientY;
-  createHeart();//鼠标移动就创建爱心
-})
+  createHeart();
+});
 
-// 创建单个爱心元素函数
-function createHeart(){
+// 创建爱心
+function createHeart() {
   const h = document.createElement('div');
   h.className = 'heart';
   h.innerText = '❤️';
-  h.style.fontSize = heartOpt.size+'px';
-  h.style.left = mx+'px';
-  h.style.top = my+'px';
+  h.style.fontSize = heartOpt.size + 'px';
+  h.style.left = mx + 'px';
+  h.style.top = my + 'px';
   document.body.appendChild(h);
   heartsArr.push(h);
-
-  // 爱心数量超过上限，删除最先创建的爱心
-  if(heartsArr.length>heartOpt.max){
-    delHeart(heartsArr.shift())
-  }
+  if (heartsArr.length > heartOpt.max) delHeart(heartsArr.shift());
 }
-// 爱心透明度变为0，延时后从页面彻底移除
-function delHeart(el){
+// 爱心淡出删除
+function delHeart(el) {
   el.style.opacity = 0;
-  setTimeout(()=>el.remove(),heartOpt.fade*1000)
+  setTimeout(() => el.remove(), heartOpt.fade * 1000);
 }
-// 定时器：每隔30ms所有爱心向上漂浮
-setInterval(()=>{
-  heartsArr.forEach(item=>{
-    item.style.top = parseFloat(item.style.top)-0.9+'px'
-  })
-},30)
+// 爱心持续上浮
+setInterval(() => {
+  heartsArr.forEach(item => {
+    item.style.top = parseFloat(item.style.top) - 0.9 + 'px';
+  });
+}, 30);
 </script>
 </body>
 </html>

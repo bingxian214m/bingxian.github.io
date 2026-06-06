@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>黑底爱心电子相册</title>
+  <!-- 手势库 -->
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <style>
+    /* 全局强制禁用所有拖拽、选中行为（核心修复） */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-drag: none; /* 禁用苹果/Chrome原生拖拽 */
+      user-select: none;       /* 禁用文字/图片选中 */
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      background: #000;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 右上角播放器 */
+    .audio-wrap {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+    }
+
+    audio {
+      width: 180px;
+      filter: drop-shadow(0 0 8px #ff69b4);
+    }
+
+    audio::-webkit-media-controls-panel {
+      background: #222;
+    }
+
+    audio::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display {
+      color: #ff69b4;
+    }
+
+    /* 相册容器 */
+    .album-box {
+      width: 92%;
+      max-width: 700px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      overflow: hidden;
+      border: 2px solid #ff69b4;
+      border-radius: 12px;
+      box-shadow: 0 0 25px #ff69b455;
+      cursor: grab;
+    }
+
+    .album-box:active {
+      cursor: grabbing;
+    }
+
+    .img-list {
+      display: flex;
+      transition: transform 0.4s ease;
+    }
+
+    /* 图片彻底禁止交互（核心修复） */
+    .img-list img {
+      width: 100%;
+      flex-shrink: 0;
+      display: block;
+      object-fit: cover;
+      pointer-events: none; /* 禁止图片所有鼠标事件 */
+    }
+
+    /* 切换按钮 */
+    .prev, .next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff69b488;
+      color: #fff;
+      border: none;
+      font-size: 26px;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .prev {left: 6px;}
+    .next {right: 6px;}
+
+    /* 爱心样式 */
+    .heart {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      color: #ff69b4;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 音乐播放器 -->
+  <div class="audio-wrap">
+    <audio controls autoplay loop id="bgMusic">
+      <source src="https://demo-music.oss-cn-beijing.aliyuncs.com/dream-music.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- 相册 -->
+  <div class="album-box">
+    <button class="prev">&lt;</button>
+    <button class="next">&gt;</button>
+    <div class="img-list" id="slider">
+      <img src="https://picsum.photos/id/237/800/500" alt="相册">
+      <img src="https://picsum.photos/id/128/800/500" alt="相册">
+      <img src="https://picsum.photos/id/36/800/500" alt="相册">
+      <img src="https://picsum.photos/id/96/800/500" alt="相册">
+    </div>
+  </div>
+
+<script>
+// ===================== 核心：彻底禁用浏览器原生拖拽（根治图片拖出） =====================
+document.ondragstart = function () { return false; };
+document.onselectstart = function () { return false; };
+window.addEventListener('dragstart', (e) => e.preventDefault());
+// ====================================================================================
+
+const slider = document.getElementById('slider');
+const prev = document.querySelector('.prev');
+const next = document.querySelector('.next');
+let index = 0;
+const total = slider.querySelectorAll('img').length;
+let imgWidth = slider.parentElement.offsetWidth;
+
+// 自适应窗口大小
+window.addEventListener('resize', () => {
+  imgWidth = slider.parentElement.offsetWidth;
+  goSlide();
+});
+imgWidth = slider.parentElement.offsetWidth;
+
+// 轮播切换
+function goSlide() {
+  slider.style.transition = 'transform 0.4s ease';
+  slider.style.transform = `translateX(-${index * imgWidth}px)`;
+}
+
+// 按钮切换
+next.onclick = () => { index = (index + 1) % total; goSlide(); };
+prev.onclick = () => { index = (index - 1 + total) % total; goSlide(); };
+
+// 自动轮播
+setInterval(() => { index = (index + 1) % total; goSlide(); }, 5000);
+
+// 拖拽滑动逻辑
+const hammer = new Hammer(slider.parentElement);
+hammer.get('pan').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+let startX = 0;
+
+hammer.on('panstart', (e) => {
+  startX = e.center.x;
+  slider.style.transition = 'none';
+  e.preventDefault();
+});
+
+hammer.on('panmove', (e) => {
+  const moveX = e.center.x - startX;
+  // 限制拖拽范围，防止过度拖动
+  const offset = Math.max(Math.min(moveX, imgWidth * 0.5), -imgWidth * 0.5);
+  slider.style.transform = `translateX(${-index * imgWidth + offset}px)`;
+  e.preventDefault();
+});
+
+hammer.on('panend', (e) => {
+  const moveX = e.center.x - startX;
+  const threshold = imgWidth * 0.25;
+
+  if (moveX < -threshold) index = (index + 1) % total;
+  else if (moveX > threshold) index = (index - 1 + total) % total;
+  
+  goSlide();
+  e.preventDefault();
+});
+
+// 爱心拖尾
+const heartOpt = { size:14, color:'#ff69b4', fade:0.7, max:90 };
+let heartsArr = [];
+let mx=0, my=0;
+
+document.addEventListener('mousemove', e=>{
+  mx = e.clientX;
+  my = e.clientY;
+  createHeart();
+});
+
+function createHeart(){
+  const h = document.createElement('div');
+  h.className = 'heart';
+  h.innerText = '❤️';
+  h.style.fontSize = heartOpt.size+'px';
+  h.style.left = mx+'px';
+  h.style.top = my+'px';
+  document.body.appendChild(h);
+  heartsArr.push(h);
+  if(heartsArr.length>heartOpt.max) delHeart(heartsArr.shift());
+}
+
+function delHeart(el){
+  el.style.opacity = 0;
+  setTimeout(()=>el.remove(), heartOpt.fade*1000);
+}
+
+setInterval(()=>{
+  heartsArr.forEach(item=>{
+    item.style.top = parseFloat(item.style.top)-0.9+'px';
+  });
+},30);
+</script>
+</body>
+</html>

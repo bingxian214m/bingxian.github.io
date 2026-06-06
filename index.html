@@ -1,40 +1,52 @@
+<!-- 声明这是HTML5文档 -->
 <!DOCTYPE html>
+<!-- 网页语言设置为简体中文 -->
 <html lang="zh-CN">
+<!-- 网页头部：设置编码、标题、样式等 -->
 <head>
+  <!-- 设置字符编码为UTF-8，防止乱码 -->
   <meta charset="UTF-8" />
+  <!-- 适配手机屏幕：宽度=设备宽度，禁止缩放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>电子相册</title>
+  <!-- 网页标题 -->
+  <title>黑底爱心电子相册</title>
+  <!-- 样式代码开始 -->
   <style>
+    /* 全局样式：清除所有元素默认边距 */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+    /* 页面主体：黑色背景，占满屏幕高度 */
     body {
       background: #000;
       min-height: 100vh;
       overflow-x: hidden;
     }
-    /* 右上角音频播放器 */
+    /* 音频播放器外层盒子：固定在右上角，不随滚动移动 */
     .audio-wrap {
       position: fixed;
       top: 16px;
       right: 16px;
       z-index: 999;
     }
+    /* 音频播放器样式：宽度、发光效果 */
     audio {
       width: 180px;
       filter: drop-shadow(0 0 8px #ff69b4);
     }
+    /* 播放器面板背景色 */
     audio::-webkit-media-controls-panel {
       background: #222;
     }
+    /* 播放器时间文字颜色 */
     audio::-webkit-media-controls-current-time-display,
     audio::-webkit-media-controls-time-remaining-display {
       color: #ff69b4;
     }
 
-    /* 相册容器 页面垂直水平居中 */
+    /* 相册大盒子：垂直水平居中，手机自适应 */
     .album-box {
       width: 92%;
       max-width: 700px;
@@ -47,17 +59,19 @@
       border-radius: 12px;
       box-shadow: 0 0 25px #ff69b455;
     }
+    /* 图片列表：横向排列，用于轮播滑动 */
     .img-list {
       display: flex;
       transition: transform 0.6s ease;
     }
+    /* 图片宽度100%，不拉伸变形 */
     .img-list img {
       width: 100%;
       flex-shrink: 0;
       display: block;
       object-fit: cover;
     }
-    /* 轮播左右按钮 */
+    /* 左右切换按钮通用样式 */
     .prev, .next {
       position: absolute;
       top: 50%;
@@ -70,10 +84,12 @@
       cursor: pointer;
       z-index: 10;
     }
+    /* 左按钮靠左 */
     .prev {left: 6px;}
+    /* 右按钮靠右 */
     .next {right: 6px;}
 
-    /* 爱心鼠标样式禁止遮挡 */
+    /* 爱心样式：不遮挡点击，漂浮效果 */
     .heart {
       position: absolute;
       pointer-events: none;
@@ -82,65 +98,90 @@
       z-index: 1;
     }
   </style>
+  <!-- 样式结束 -->
 </head>
+<!-- 网页主体内容 -->
 <body>
-  <!-- 右上角播放器 -->
+  <!-- 右上角音乐播放器 -->
   <div class="audio-wrap">
+    <!-- 自动播放、循环播放背景音乐 -->
     <audio controls autoplay loop id="bgMusic">
+      <!-- 音乐文件地址 -->
       <source src="http://music.163.com/song/media/outer/url?id=1811941177.mp3" type="audio/mpeg">
-    
+    </audio>
   </div>
 
-  <!-- 居中自适应电子相册 -->
+  <!-- 电子相册主体 -->
   <div class="album-box">
+    <!-- 左切换按钮 -->
     <button class="prev">&lt;</button>
+    <!-- 右切换按钮 -->
     <button class="next">&gt;</button>
+    <!-- 轮播图片列表 -->
     <div class="img-list" id="slider">
-      <!-- 替换成你的图片链接，多张自行追加img标签 -->
+      <!-- 图片1 -->
       <img src="https://picsum.photos/id/237/800/500" alt="相册">
+      <!-- 图片2 -->
       <img src="https://picsum.photos/id/128/800/500" alt="相册">
+      <!-- 图片3 -->
       <img src="https://picsum.photos/id/36/800/500" alt="相册">
+      <!-- 图片4 -->
       <img src="https://picsum.photos/id/96/800/500" alt="相册">
     </div>
   </div>
 
+<!-- JS脚本：实现轮播+爱心拖尾 -->
 <script>
-// ========== 1.电子相册轮播逻辑 ==========
+// 获取轮播容器
 const slider = document.getElementById('slider');
+// 获取所有图片
 const imgs = slider.querySelectorAll('img');
+// 获取左按钮
 const prev = document.querySelector('.prev');
+// 获取右按钮
 const next = document.querySelector('.next');
+// 当前显示第几张图
 let index = 0;
+// 总图片数量
 const total = imgs.length;
 
+// 切换图片函数：移动图片列表实现轮播
 function changeSlide(){
   slider.style.transform = `translateX(-${index * 100}%)`;
 }
+// 点击下一张
 next.onclick = ()=>{
   index = (index+1)%total;
   changeSlide();
 }
+// 点击上一张
 prev.onclick = ()=>{
   index = (index-1+total)%total;
   changeSlide();
 }
-// 自动轮播
+// 自动轮播：每4.5秒切换一张
 setInterval(()=>{
   index = (index+1)%total;
   changeSlide();
 },4500)
 
-// ========== 2.鼠标爱心拖尾效果 ==========
+// 爱心参数设置：大小、颜色、消失速度、最大数量
 const heartOpt = {size:14,color:'#ff69b4',fade:0.7,max:90};
+// 存放所有爱心的数组
 let heartsArr = [];
-let mx=0,my=0;
+// 鼠标X坐标
+let mx=0;
+// 鼠标Y坐标
+let my=0;
 
+// 监听鼠标移动
 document.addEventListener('mousemove',e=>{
   mx = e.clientX;
   my = e.clientY;
   createHeart();
 })
 
+// 创建爱心元素
 function createHeart(){
   const h = document.createElement('div');
   h.className = 'heart';
@@ -151,15 +192,17 @@ function createHeart(){
   document.body.appendChild(h);
   heartsArr.push(h);
 
+  // 爱心数量超过上限，删除最早的
   if(heartsArr.length>heartOpt.max){
     delHeart(heartsArr.shift())
   }
 }
+// 爱心淡出后删除
 function delHeart(el){
   el.style.opacity = 0;
   setTimeout(()=>el.remove(),heartOpt.fade*1000)
 }
-// 爱心缓慢上浮
+// 爱心自动向上漂浮
 setInterval(()=>{
   heartsArr.forEach(item=>{
     item.style.top = parseFloat(item.style.top)-0.9+'px'
@@ -168,5 +211,3 @@ setInterval(()=>{
 </script>
 </body>
 </html>
-
-//找到<source src="xxx">，把链接替换成本地 mp3 或在线音乐地址，打开网页自动播放,找到<source src="xxx">，把链接替换成本地 mp3 或在线音乐地址，打开网页自动播放。

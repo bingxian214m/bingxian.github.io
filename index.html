@@ -4,16 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>黑底爱心电子相册</title>
-  <!-- 手势库 -->
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
   <style>
-    /* 全局强制禁用所有拖拽、选中行为（核心修复） */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-user-drag: none; /* 禁用苹果/Chrome原生拖拽 */
-      user-select: none;       /* 禁用文字/图片选中 */
+      -webkit-user-drag: none;
+      user-select: none;
       -webkit-touch-callout: none;
     }
 
@@ -23,7 +21,6 @@
       overflow: hidden;
     }
 
-    /* 右上角播放器 */
     .audio-wrap {
       position: fixed;
       top: 16px;
@@ -45,7 +42,6 @@
       color: #ff69b4;
     }
 
-    /* 相册容器 */
     .album-box {
       width: 92%;
       max-width: 700px;
@@ -69,16 +65,27 @@
       transition: transform 0.4s ease;
     }
 
-    /* 图片彻底禁止交互（核心修复） */
+    /* 基础图片样式 - 动态控制交互性 */
     .img-list img {
       width: 100%;
       flex-shrink: 0;
       display: block;
       object-fit: cover;
-      pointer-events: none; /* 禁止图片所有鼠标事件 */
+      draggable: false;
     }
 
-    /* 切换按钮 */
+    /* PC端专用：彻底禁止图片交互 */
+    .img-pc {
+      pointer-events: none;
+    }
+
+    /* 移动端专用：允许长按保存 */
+    .img-mobile {
+      pointer-events: auto;
+      -webkit-touch-callout: default;
+      user-select: auto;
+    }
+
     .prev, .next {
       position: absolute;
       top: 50%;
@@ -95,7 +102,6 @@
     .prev {left: 6px;}
     .next {right: 6px;}
 
-    /* 爱心样式 */
     .heart {
       position: absolute;
       pointer-events: none;
@@ -107,14 +113,12 @@
 </head>
 
 <body>
-  <!-- 音乐播放器 -->
   <div class="audio-wrap">
     <audio controls autoplay loop id="bgMusic">
-      <source src="https://demo-music.oss-cn-beijing.aliyuncs.com/dream-music.mp3" type="audio/mpeg">
-    </audio>
+      <source src="http://music.163.com/song/media/outer/url?id=1811941177.mp3" type="audio/mpeg">
+    
   </div>
 
-  <!-- 相册 -->
   <div class="album-box">
     <button class="prev">&lt;</button>
     <button class="next">&gt;</button>
@@ -127,20 +131,45 @@
   </div>
 
 <script>
-// ===================== 核心：彻底禁用浏览器原生拖拽（根治图片拖出） =====================
-document.ondragstart = function () { return false; };
-document.onselectstart = function () { return false; };
-window.addEventListener('dragstart', (e) => e.preventDefault());
-// ====================================================================================
+// ===================== 设备检测与适配（核心功能） =====================
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const images = document.querySelectorAll('.img-list img');
 
+// 根据设备类型设置图片交互属性
+function setupImageInteraction() {
+  images.forEach(img => {
+    if (isMobile) {
+      // 移动端：允许长按保存
+      img.classList.add('img-mobile');
+      img.classList.remove('img-pc');
+      img.removeEventListener('contextmenu', preventContextMenu);
+      img.removeEventListener('dragstart', preventDrag);
+    } else {
+      // PC端：禁止拖拽和右键
+      img.classList.add('img-pc');
+      img.classList.remove('img-mobile');
+      img.addEventListener('contextmenu', preventContextMenu);
+      img.addEventListener('dragstart', preventDrag);
+    }
+  });
+}
+
+// 辅助函数
+function preventContextMenu(e) { e.preventDefault(); }
+function preventDrag(e) { e.preventDefault(); }
+
+// 初始化设备适配
+setupImageInteraction();
+
+// ===================== 核心功能：轮播与拖拽 =====================
 const slider = document.getElementById('slider');
 const prev = document.querySelector('.prev');
 const next = document.querySelector('.next');
 let index = 0;
-const total = slider.querySelectorAll('img').length;
+const total = images.length;
 let imgWidth = slider.parentElement.offsetWidth;
 
-// 自适应窗口大小
+// 窗口大小变化处理
 window.addEventListener('resize', () => {
   imgWidth = slider.parentElement.offsetWidth;
   goSlide();
@@ -160,7 +189,7 @@ prev.onclick = () => { index = (index - 1 + total) % total; goSlide(); };
 // 自动轮播
 setInterval(() => { index = (index + 1) % total; goSlide(); }, 5000);
 
-// 拖拽滑动逻辑
+// 拖拽滑动逻辑（仅PC端和移动端拖拽容器，不拖拽图片）
 const hammer = new Hammer(slider.parentElement);
 hammer.get('pan').set({ direction: Hammer.DIRECTION_HORIZONTAL });
 let startX = 0;
@@ -173,7 +202,6 @@ hammer.on('panstart', (e) => {
 
 hammer.on('panmove', (e) => {
   const moveX = e.center.x - startX;
-  // 限制拖拽范围，防止过度拖动
   const offset = Math.max(Math.min(moveX, imgWidth * 0.5), -imgWidth * 0.5);
   slider.style.transform = `translateX(${-index * imgWidth + offset}px)`;
   e.preventDefault();
@@ -190,7 +218,7 @@ hammer.on('panend', (e) => {
   e.preventDefault();
 });
 
-// 爱心拖尾
+// ===================== 爱心拖尾 =====================
 const heartOpt = { size:14, color:'#ff69b4', fade:0.7, max:90 };
 let heartsArr = [];
 let mx=0, my=0;
@@ -223,6 +251,13 @@ setInterval(()=>{
     item.style.top = parseFloat(item.style.top)-0.9+'px';
   });
 },30);
+
+// ===================== 全局拖拽拦截（PC端安全网） =====================
+if (!isMobile) {
+  document.ondragstart = function () { return false; };
+  document.onselectstart = function () { return false; };
+  window.addEventListener('dragstart', (e) => e.preventDefault());
+}
 </script>
 </body>
 </html>

@@ -1,6 +1,0 @@
-{
-  "name": "Photo Gallery & Interactive Site",
-  "description": "A responsive website featuring a photo gallery, background music, and interactive heart cursor effects.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

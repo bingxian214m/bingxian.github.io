@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>电子相册</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* 右上角音频播放器 */
+    .audio-wrap {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+    }
+    audio {
+      width: 180px;
+      filter: drop-shadow(0 0 8px #ff69b4);
+    }
+    audio::-webkit-media-controls-panel {
+      background: #222;
+    }
+    audio::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display {
+      color: #ff69b4;
+    }
+
+    /* 相册容器 页面垂直水平居中 */
+    .album-box {
+      width: 92%;
+      max-width: 700px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      overflow: hidden;
+      border: 2px solid #ff69b4;
+      border-radius: 12px;
+      box-shadow: 0 0 25px #ff69b455;
+    }
+    .img-list {
+      display: flex;
+      transition: transform 0.6s ease;
+    }
+    .img-list img {
+      width: 100%;
+      flex-shrink: 0;
+      display: block;
+      object-fit: cover;
+    }
+    /* 轮播左右按钮 */
+    .prev, .next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff69b488;
+      color: #fff;
+      border: none;
+      font-size: 26px;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .prev {left: 6px;}
+    .next {right: 6px;}
+
+    /* 爱心鼠标样式禁止遮挡 */
+    .heart {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      color: #ff69b4;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- 右上角播放器 -->
+  <div class="audio-wrap">
+    <audio controls autoplay loop id="bgMusic">
+      <source src="http://music.163.com/song/media/outer/url?id=1811941177.mp3" type="audio/mpeg">
+    
+  </div>
+
+  <!-- 居中自适应电子相册 -->
+  <div class="album-box">
+    <button class="prev">&lt;</button>
+    <button class="next">&gt;</button>
+    <div class="img-list" id="slider">
+      <!-- 替换成你的图片链接，多张自行追加img标签 -->
+      <img src="https://picsum.photos/id/237/800/500" alt="相册">
+      <img src="https://picsum.photos/id/128/800/500" alt="相册">
+      <img src="https://picsum.photos/id/36/800/500" alt="相册">
+      <img src="https://picsum.photos/id/96/800/500" alt="相册">
+    </div>
+  </div>
+
+<script>
+// ========== 1.电子相册轮播逻辑 ==========
+const slider = document.getElementById('slider');
+const imgs = slider.querySelectorAll('img');
+const prev = document.querySelector('.prev');
+const next = document.querySelector('.next');
+let index = 0;
+const total = imgs.length;
+
+function changeSlide(){
+  slider.style.transform = `translateX(-${index * 100}%)`;
+}
+next.onclick = ()=>{
+  index = (index+1)%total;
+  changeSlide();
+}
+prev.onclick = ()=>{
+  index = (index-1+total)%total;
+  changeSlide();
+}
+// 自动轮播
+setInterval(()=>{
+  index = (index+1)%total;
+  changeSlide();
+},4500)
+
+// ========== 2.鼠标爱心拖尾效果 ==========
+const heartOpt = {size:14,color:'#ff69b4',fade:0.7,max:90};
+let heartsArr = [];
+let mx=0,my=0;
+
+document.addEventListener('mousemove',e=>{
+  mx = e.clientX;
+  my = e.clientY;
+  createHeart();
+})
+
+function createHeart(){
+  const h = document.createElement('div');
+  h.className = 'heart';
+  h.innerText = '❤️';
+  h.style.fontSize = heartOpt.size+'px';
+  h.style.left = mx+'px';
+  h.style.top = my+'px';
+  document.body.appendChild(h);
+  heartsArr.push(h);
+
+  if(heartsArr.length>heartOpt.max){
+    delHeart(heartsArr.shift())
+  }
+}
+function delHeart(el){
+  el.style.opacity = 0;
+  setTimeout(()=>el.remove(),heartOpt.fade*1000)
+}
+// 爱心缓慢上浮
+setInterval(()=>{
+  heartsArr.forEach(item=>{
+    item.style.top = parseFloat(item.style.top)-0.9+'px'
+  })
+},30)
+</script>
+</body>
+</html>
+
+//找到<source src="xxx">，把链接替换成本地 mp3 或在线音乐地址，打开网页自动播放,找到<source src="xxx">，把链接替换成本地 mp3 或在线音乐地址，打开网页自动播放。
